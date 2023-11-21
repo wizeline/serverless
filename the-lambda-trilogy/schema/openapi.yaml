@@ -1,0 +1,77 @@
+openapi: 3.0.3
+
+info:
+  title: Wizeline Lambda Trilogy Calculator
+  version: 0.1.0
+  description: |
+    This API invokes a calculator that invokes different approaches of lambda functions through AWS API Gateway service.
+
+paths:
+  /add:
+    get:
+      summary: Adds two numbers
+      operationId: add
+      parameters:
+        - name: firstNum
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: secondNum
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            text/plain:
+              schema:
+                type: string
+                
+  /subtract:
+    get:
+      summary: Subtracts two numbers
+      operationId: subtract
+      parameters:
+        - name: firstNum
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: secondNum
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            text/plain:
+              schema:
+                type: string
+                
+  /multiply:
+    get:
+      summary: Multiply two numbers
+      operationId: multiply
+      parameters:
+        - name: firstNum
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: secondNum
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            text/plain:
+              schema:
+                type: string

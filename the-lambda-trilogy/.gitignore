@@ -1,0 +1,30 @@
+.DS_Store
+.idea/
+.vscode/
+.history
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+*.js
+!jest.config.js
+*.d.ts
+node_modules
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+# CDK Context & Staging files
+cdk/cdk.context.json
+cdk/.cdk.staging/
+cdk/cdk.out/
+cdk/*.tabl.json
+cdk/cdk-integ.out.*/
+cdk/*.js
+cdk/!jest.config.js
+cdk/*.d.ts
+cdk/node_modules
