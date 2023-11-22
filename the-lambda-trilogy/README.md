@@ -57,7 +57,7 @@ This is using the lambda runtime container like a docker container. You use a we
 ## Deconstructing The Lambda Trilogy
 If you want a walkthrough of the theory, the code and finally a demo of the deployed implementation check out:
 
-[![Alt text](https://img.youtube.com/vi/tHD3i06Z6gU/0.jpg)](https://www.youtube.com/watch?v=tHD3i06Z6gU)
+[![Lambda Trilogy Tutorial Video](https://img.youtube.com/vi/tHD3i06Z6gU/0.jpg)](https://www.youtube.com/watch?v=tHD3i06Z6gU)
 
 ## What's In This CDK Pattern?
 
@@ -68,14 +68,46 @@ This calculator can only perform three functions:
 - Subtract: `subtract(a, b) => a - b`
 - Multiply: `multiply(a, b) => a * b`
 
+## How to Deploy
+
+To deploy all stacks in this project you can execute the following in the terminal:
+
+```bash
+#1.
+cdk bootstrap # Run only if CDK is not bootstrapped in the AWS account
+
+#2.
+npm install # Install dependencies
+
+#3.
+cdk synth --all # Synthetize stacks
+
+#4.
+cdk deploy --all # Deploy all stacks
+```
+
+### Deploy a specific stack
+
+If you only want to deploy/update a specific stack first grab the name of the desired one by executing:
+
+```bash
+cdk ls # List stacks
+```
+
+and then execute:
+
+```bash
+cdk synth nameOfTheDesiredStack # Synthetize specific stack
+
+cdk deploy nameOfTheDesiredStack # Deploy specific stack
+```
+
 ## Useful commands
 
 * `npm install`     install dependencies
 * `npm run build`   compile typescript to js
 * `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
 * `cdk deploy`      deploy this stack to your default AWS account/region
 * `cdk diff`        compare deployed stack with current state
 * `cdk synth`       emits the synthesized CloudFormation template
 
-## How to deploy
