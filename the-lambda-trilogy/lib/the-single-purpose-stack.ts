@@ -70,7 +70,7 @@ export class TheSinglePurposeFunctionStack extends cdk.Stack {
             defaultCorsPreflightOptions: {
                 allowOrigins: apigw.Cors.ALL_ORIGINS,
                 allowMethods: apigw.Cors.ALL_METHODS,
-                allowHeaders: [...apigw.Cors.DEFAULT_HEADERS],
+                allowHeaders: apigw.Cors.DEFAULT_HEADERS,
             },
             endpointTypes: [apigw.EndpointType.REGIONAL],
             cloudWatchRoleRemovalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -80,7 +80,7 @@ export class TheSinglePurposeFunctionStack extends cdk.Stack {
          * Resources & Methods
          */
         const addResource = restApi.root.addResource('add');
-        const addMethod = addResource.addMethod('GET', new apigw.LambdaIntegration(addLambda));
+        addResource.addMethod('GET', new apigw.LambdaIntegration(addLambda));
         
         const subtractResource = restApi.root.addResource('subtract');
         subtractResource.addMethod('GET', new apigw.LambdaIntegration(subtractLambda));
