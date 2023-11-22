@@ -1,6 +1,7 @@
+import 'source-map-support/register';
 import type { Request } from 'express';
 import * as express from 'express';
-import serverlessExpress from '@vendia/serverless-express';
+import { configure as serverlessExpress } from '@vendia/serverless-express';
 
 const app = express();
 
@@ -18,12 +19,13 @@ app.get('/add', async function (request, response) {
 
     const firstNum = Number(request.query?.firstNum) || 0;
     const secondNum = Number(request.query?.secondNum) || 0;
-    const total = firstNum + secondNum;
+    const result = firstNum + secondNum;
 
-    response
+    return response
         .status(200)
+        .set('Access-Control-Allow-Origin', '*')
         .json({
-            total,
+            result,
         });
 });
 
@@ -34,8 +36,9 @@ app.get('/subtract', async function (request, response) {
     const secondNum = Number(request.query?.secondNum) || 0;
     const total = firstNum - secondNum;
 
-    response
+    return response
         .status(200)
+        .set('Access-Control-Allow-Origin', '*')
         .json({
             total,
         });
@@ -48,8 +51,9 @@ app.get('/multiply', async function (request, response) {
     const secondNum = Number(request.query?.secondNum) || 0;
     const result = firstNum * secondNum;
 
-    response
+    return response
         .status(200)
+        .set('Access-Control-Allow-Origin', '*')
         .send(result.toString());
 });
 

@@ -20,6 +20,9 @@ export class TheFatLambdaStack extends cdk.Stack {
             bundling: {
                 preCompilation: true,
             },
+            currentVersionOptions: {
+                removalPolicy: cdk.RemovalPolicy.DESTROY,
+            },
         };
 
         const addLambda = new lambdaNodejs.NodejsFunction(this, 'AddLambda', {
@@ -27,17 +30,32 @@ export class TheFatLambdaStack extends cdk.Stack {
             handler: 'add',
             ...defaultLambdaSettings
         });
+        
+        new logs.LogGroup(this, 'AddLambdaLogGroup', {
+            logGroupName: `/aws/lambda/${addLambda.functionName}`,
+            removalPolicy: cdk.RemovalPolicy.DESTROY,
+        });
 
         const subtractLambda = new lambdaNodejs.NodejsFunction(this, 'SubtractLambda', {
             functionName: 'fat-subtract-lambda',
             handler: 'subtract',
             ...defaultLambdaSettings
         });
+
+        new logs.LogGroup(this, 'SubtractLambdaLogGroup', {
+            logGroupName: `/aws/lambda/${subtractLambda.functionName}`,
+            removalPolicy: cdk.RemovalPolicy.DESTROY,
+        });
         
         const multiplyLambda = new lambdaNodejs.NodejsFunction(this, 'MultiplyLambda', {
             functionName: 'fat-multiply-lambda',
             handler: 'multiply',
             ...defaultLambdaSettings
+        });
+
+        new logs.LogGroup(this, 'MultiplyLambdaLogGroup', {
+            logGroupName: `/aws/lambda/${multiplyLambda.functionName}`,
+            removalPolicy: cdk.RemovalPolicy.DESTROY,
         });
 
         /**
@@ -57,6 +75,7 @@ export class TheFatLambdaStack extends cdk.Stack {
                 statusCode: 200,
             },
             endpointTypes: [apig.EndpointType.REGIONAL],
+            cloudWatchRoleRemovalPolicy: cdk.RemovalPolicy.DESTROY,
         });
 
         /**

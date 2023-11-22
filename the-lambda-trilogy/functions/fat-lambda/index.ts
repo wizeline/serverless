@@ -10,10 +10,10 @@ export async function add(event: APIGatewayProxyEvent): Promise<APIGatewayProxyR
         
         const result = Number(firstNum) + Number(secondNum);
     
-        return sendResponse(200, result.toString());
+        return sendResponse(200, result);
     } catch (error: unknown) {
         console.error(error);
-        return sendResponse(500, 'Internal error');
+        throw error;
     }
 }
 
@@ -24,10 +24,10 @@ export async function subtract(event: APIGatewayProxyEvent): Promise<APIGatewayP
         
         const result = Number(firstNum) - Number(secondNum);
     
-        return sendResponse(200, result.toString());
+        return sendResponse(200, result);
     } catch (error) {
         console.error(error);
-        return sendResponse(500, 'Internal error');
+        throw error;
     }
 }
 
@@ -38,9 +38,9 @@ export async function multiply(event: APIGatewayProxyEvent): Promise<APIGatewayP
         
         const result = Number(firstNum) * Number(secondNum);
     
-        return sendResponse(200, result.toString());
+        return sendResponse(200, result);
     } catch (error) {
         console.error(error);
-        return sendResponse(500, 'Internal error');
+        throw error;
     }
 }

@@ -3,7 +3,7 @@ import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as lambdaNodejs from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as logs from 'aws-cdk-lib/aws-logs';
-import * as apig from 'aws-cdk-lib/aws-apigateway';
+import * as apigw from 'aws-cdk-lib/aws-apigateway';
 
 export class TheLambdaLithStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -22,32 +22,40 @@ export class TheLambdaLithStack extends cdk.Stack {
             bundling: {
                 preCompilation: true,
             },
+            currentVersionOptions: {
+                removalPolicy: cdk.RemovalPolicy.DESTROY,
+            },
+        });
+
+        new logs.LogGroup(this, 'LambdaLithLogGroup', {
+            logGroupName: `/aws/lambda/${lambdaLith.functionName}`,
+            removalPolicy: cdk.RemovalPolicy.DESTROY,
         });
 
         /**
          * API gateway
          */
-        const restApi = new apig.RestApi(this, 'LambdaLithAPI', {
+        const restApi = new apigw.RestApi(this, 'LambdaLithAPI', {
             cloudWatchRole: true,
             deployOptions: {
-                loggingLevel: apig.MethodLoggingLevel.INFO,
+                loggingLevel: apigw.MethodLoggingLevel.INFO,
                 stageName: 'development',
                 metricsEnabled: false,
             },
             defaultCorsPreflightOptions: {
-                allowOrigins: apig.Cors.ALL_ORIGINS,
-                allowMethods: apig.Cors.ALL_METHODS,
-                allowHeaders: ['Content-Type'],
-                statusCode: 200,
+                allowOrigins: apigw.Cors.ALL_ORIGINS,
+                allowMethods: apigw.Cors.ALL_METHODS,
+                allowHeaders: [...apigw.Cors.DEFAULT_HEADERS],
             },
-            endpointTypes: [apig.EndpointType.REGIONAL],
+            endpointTypes: [apigw.EndpointType.REGIONAL],
+            cloudWatchRoleRemovalPolicy: cdk.RemovalPolicy.DESTROY,
         });
 
         /**
          * Resources & Methods
          */
         restApi.root.addProxy({
-            defaultIntegration: new apig.LambdaIntegration(lambdaLith)
+            defaultIntegration: new apigw.LambdaIntegration(lambdaLith)
         });
     }
 }

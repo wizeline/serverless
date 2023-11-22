@@ -5,6 +5,20 @@ info:
   version: 0.1.0
   description: |
     This API invokes a calculator that invokes different approaches of lambda functions through AWS API Gateway service.
+  
+servers:
+  - url: https://{apiId}.execute-api.{region}.amazonaws.com/{stage}/
+    description: Single Purpose Lambda
+    variables:
+      stage:
+        default: development
+        description: API Stage
+      region:
+        default: us-east-1
+        description: AWS Region
+      apiId:
+        default: '{API ID goes here}'
+        description: API ID
 
 paths:
   /add:
@@ -16,19 +30,24 @@ paths:
           in: query
           required: true
           schema:
-            type: integer
+            type: number
+            example: 1
         - name: secondNum
           in: query
           required: true
           schema:
-            type: integer
+            type: number
+            example: 1
       responses:
         '200':
           description: Successful operation
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
+                type: object
+                properties:
+                  result:
+                    type: number
                 
   /subtract:
     get:
@@ -39,19 +58,24 @@ paths:
           in: query
           required: true
           schema:
-            type: integer
+            type: number
+            example: 3
         - name: secondNum
           in: query
           required: true
           schema:
-            type: integer
+            type: number
+            example: 1
       responses:
         '200':
           description: Successful operation
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
+                type: object
+                properties:
+                  result:
+                    type: number
                 
   /multiply:
     get:
@@ -62,16 +86,21 @@ paths:
           in: query
           required: true
           schema:
-            type: integer
+            type: number
+            example: 2
         - name: secondNum
           in: query
           required: true
           schema:
-            type: integer
+            type: number
+            example: 4
       responses:
         '200':
           description: Successful operation
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
+                type: object
+                properties:
+                  result:
+                    type: number

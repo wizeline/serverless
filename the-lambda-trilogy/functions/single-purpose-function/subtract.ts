@@ -10,9 +10,9 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
         
         const result = Number(firstNum) - Number(secondNum);
     
-        return sendResponse(200, result.toString());
+        return sendResponse(200, result);
     } catch (error) {
         console.error(error);
-        return sendResponse(500, 'Internal error');
+        throw error;
     }
 }
