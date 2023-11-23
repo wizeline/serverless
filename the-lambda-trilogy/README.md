@@ -104,9 +104,10 @@ cdk deploy nameOfTheDesiredStack # Deploy specific stack
 
 ## Useful commands
 
-* `npm install`     install dependencies
+* `npm install`     install project dependencies
 * `npm run build`   compile typescript to js
 * `npm run watch`   watch for changes and compile
+* `cdk bootstrap`   provisions resources CDK needs before deploying
 * `cdk deploy`      deploy this stack to your default AWS account/region
 * `cdk diff`        compare deployed stack with current state
 * `cdk synth`       emits the synthesized CloudFormation template
