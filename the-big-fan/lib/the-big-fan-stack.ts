@@ -70,6 +70,9 @@ export class TheBigFanStack extends cdk.Stack {
                         "error": "Bad input!"
                     }`,
                 },
+                responseParameters: {
+                    'method.response.header.Access-Control-Allow-Origin': '\'*\''
+                },
             },
             {
                 selectionPattern: '5\\d{2}',
@@ -78,6 +81,9 @@ export class TheBigFanStack extends cdk.Stack {
                     'application/json': `{
                         "error": "Internal Service Error!"
                     }`,
+                },
+                responseParameters: {
+                    'method.response.header.Access-Control-Allow-Origin': '\'*\''
                 },
             },
         ];
@@ -88,6 +94,7 @@ export class TheBigFanStack extends cdk.Stack {
             integrationHttpMethod: 'POST',
             options: {
                 credentialsRole: restApiRole,
+                passthroughBehavior: apigw.PassthroughBehavior.NEVER,
                 requestTemplates: {
                     'application/json': `#set($context.requestOverride.header.X-Amz-Target = 'AWSEvents.PutEvents')
                     #set($context.requestOverride.header.Content-Type = 'application/x-amz-json-1.1')
@@ -115,6 +122,9 @@ export class TheBigFanStack extends cdk.Stack {
                                 "requestId": "$context.requestId"
                             }
                             `,
+                        },
+                        responseParameters: {
+                            'method.response.header.Access-Control-Allow-Origin': '\'*\''
                         }
                     },
                     ...errorResponses,
@@ -126,12 +136,21 @@ export class TheBigFanStack extends cdk.Stack {
             methodResponses: [
                 {
                     statusCode: '200',
+                    responseParameters: {
+                        'method.response.header.Access-Control-Allow-Origin': true,
+                    },
                 },
                 {
                     statusCode: '400',
+                    responseParameters: {
+                        'method.response.header.Access-Control-Allow-Origin': true,
+                    },
                 },
                 {
                     statusCode: '500',
+                    responseParameters: {
+                        'method.response.header.Access-Control-Allow-Origin': true,
+                    },
                 },
             ],
         };
