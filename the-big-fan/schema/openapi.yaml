@@ -21,10 +21,10 @@ servers:
         description: API ID
 
 paths:
-  /order:
+  /whitdrawl:
     post:
-      summary: Sends orders
-      operationId: order
+      summary: Sends transactions
+      operationId: whitdrawl
       requestBody:
         required: true
         content:
