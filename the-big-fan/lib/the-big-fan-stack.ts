@@ -59,7 +59,7 @@ export class TheBigFanStack extends cdk.Stack {
         /**
         * Resources & Methods
         */
-        const orderResource = restApi.root.addResource('order');
+        const apiResource = restApi.root.addResource('whitdrawl');
         
         const errorResponses = [
             {
@@ -155,7 +155,7 @@ export class TheBigFanStack extends cdk.Stack {
             ],
         };
         
-        orderResource.addMethod('POST', integration, methodOptions);
+        apiResource.addMethod('POST', integration, methodOptions);
 
         /**
          * Queues
