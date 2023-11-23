@@ -5,39 +5,27 @@ import * as eventsTargets from 'aws-cdk-lib/aws-events-targets';
 import * as apigw from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as lambdaNodejs from 'aws-cdk-lib/aws-lambda-nodejs';
+import * as eventSources from 'aws-cdk-lib/aws-lambda-event-sources';
 
 export class TheBigFanStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
-
+        
         const AWS_REGION = this.region;
         
         /**
-         * Event Bus
-         */
+        * Event Bus
+        */
         const eventBus = new events.EventBus(this, 'EventBus', {
             eventBusName: 'BigFanBus',
         });
-
-        const eventLoggerRule = new events.Rule(this, 'EventLoggerRule', {
-            description: 'Log all events',
-            eventBus,
-            eventPattern: {
-                region: [AWS_REGION],
-            },
-        });
-
-        const logGroup = new logs.LogGroup(this, 'EventLogGroup', {
-            logGroupName: `/aws/events/${eventBus.eventBusName}`,
-            removalPolicy: cdk.RemovalPolicy.DESTROY,
-        });
-        const logGroupTarget = new eventsTargets.CloudWatchLogGroup(logGroup);
-
-        eventLoggerRule.addTarget(logGroupTarget);
-
+        
         /**
-         * API
-         */
+        * API
+        */
         const restApi = new apigw.RestApi(this, 'BigFanAPI', {
             cloudWatchRole: true,
             cloudWatchRoleRemovalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -53,13 +41,13 @@ export class TheBigFanStack extends cdk.Stack {
             },
             endpointTypes: [apigw.EndpointType.REGIONAL],
         });
-
+        
         const restApiRole = new iam.Role(this, 'BigFanApiRole', {
             assumedBy: new iam.ServicePrincipal('apigateway.amazonaws.com', {
                 region: AWS_REGION,
             }),
         });
-
+        
         restApiRole.addToPolicy(
             new iam.PolicyStatement({
                 effect: iam.Effect.ALLOW,
@@ -67,12 +55,32 @@ export class TheBigFanStack extends cdk.Stack {
                 actions: ['events:PutEvents'],
             })
         );
-
+            
         /**
-         * Resources & Methods
-         */
+        * Resources & Methods
+        */
         const orderResource = restApi.root.addResource('order');
         
+        const errorResponses = [
+            {
+                selectionPattern: '400',
+                statusCode: '400',
+                responseTemplates: {
+                    'application/json': `{
+                        "error": "Bad input!"
+                    }`,
+                },
+            },
+            {
+                selectionPattern: '5\\d{2}',
+                statusCode: '500',
+                responseTemplates: {
+                    'application/json': `{
+                        "error": "Internal Service Error!"
+                    }`,
+                },
+            },
+        ];
         const integration = new apigw.AwsIntegration({
             service: 'events',
             action: 'PutEvents',
@@ -80,9 +88,154 @@ export class TheBigFanStack extends cdk.Stack {
             integrationHttpMethod: 'POST',
             options: {
                 credentialsRole: restApiRole,
+                requestTemplates: {
+                    'application/json': `#set($context.requestOverride.header.X-Amz-Target = 'AWSEvents.PutEvents')
+                    #set($context.requestOverride.header.Content-Type = 'application/x-amz-json-1.1')
+                    #set($inputRoot = $input.path('$'))
+                    {
+                        "Entries": [
+                            #foreach($transaction in $inputRoot.transactions)
+                            {
+                                "EventBusName": "BigFanBus",
+                                "Source": "com.wizeline.serverless.bigfanapi",
+                                "Detail": "{ \\"paymentType\\": \\"$transaction.paymentType\\", \\"amount\\": $transaction.amount }",
+                                "Resources": [],
+                                "DetailType": "transaction"
+                            }#if($foreach.hasNext),#end
+                            #end
+                        ]
+                    }`
+                },
+                integrationResponses: [
+                    {
+                        statusCode: '200',
+                        responseTemplates: {
+                            'application/json': `
+                            {
+                                "requestId": "$context.requestId"
+                            }
+                            `,
+                        }
+                    },
+                    ...errorResponses,
+                ]
             },
         });
 
-        orderResource.addMethod('POST', integration);
+        const methodOptions: apigw.MethodOptions = {
+            methodResponses: [
+                {
+                    statusCode: '200',
+                },
+                {
+                    statusCode: '400',
+                },
+                {
+                    statusCode: '500',
+                },
+            ],
+        };
+        
+        orderResource.addMethod('POST', integration, methodOptions);
+
+        /**
+         * Queues
+         */
+        const creditQueue = new sqs.Queue(this, 'BigFanCreditQueue', {
+            visibilityTimeout: cdk.Duration.seconds(300),
+            queueName: 'BigFanCreditQueue',
+        });
+
+        const debitQueue = new sqs.Queue(this, 'BigFanDebitQueue', {
+            visibilityTimeout: cdk.Duration.seconds(300),
+            queueName: 'BigFanDebitQueue',
+        });
+
+        /**
+         * Lambda functions
+         */
+        const defaultLambdaSettings: lambdaNodejs.NodejsFunctionProps = {
+            handler: 'handler',
+            runtime: lambda.Runtime.NODEJS_18_X,
+            architecture: lambda.Architecture.ARM_64,
+            bundling: {
+                preCompilation: true,
+            },
+            currentVersionOptions: {
+                removalPolicy: cdk.RemovalPolicy.DESTROY,
+            },
+        };
+
+        const debitLambda = new lambdaNodejs.NodejsFunction(this, 'BigFanDebitLambda', {
+            functionName: 'big-fan-debit-processor',
+            entry: './functions/debit-processor.ts',
+            ...defaultLambdaSettings,
+        });
+
+        debitQueue.grantConsumeMessages(debitLambda);
+        debitLambda.addEventSource(new eventSources.SqsEventSource(debitQueue, {
+            batchSize: 2,
+            maxBatchingWindow: cdk.Duration.seconds(10),
+            maxConcurrency: 2,
+        }));
+
+        const creditLambda = new lambdaNodejs.NodejsFunction(this, 'BigFanCreditLambda', {
+            functionName: 'big-fan-credit-processor',
+            entry: './functions/credit-processor.ts',
+            ...defaultLambdaSettings,
+        });
+
+        creditQueue.grantConsumeMessages(creditLambda);
+        creditLambda.addEventSource(new eventSources.SqsEventSource(creditQueue, {
+            batchSize: 2,
+            maxBatchingWindow: cdk.Duration.seconds(10),
+            maxConcurrency: 2,
+        }));
+
+        /**
+         * LogGroup
+         */
+        const logGroup = new logs.LogGroup(this, 'BigFanEventLogGroup', {
+            logGroupName: `/aws/events/${eventBus.eventBusName}`,
+            removalPolicy: cdk.RemovalPolicy.DESTROY,
+        });
+
+        /**
+         * Event Rules & Targets
+         */
+        const eventLoggerRule = new events.Rule(this, 'BigFanEventLoggerRule', {
+            description: 'Log all events',
+            eventBus,
+            eventPattern: {
+                region: [AWS_REGION],
+            },
+        });
+        
+        eventLoggerRule.addTarget(new eventsTargets.CloudWatchLogGroup(logGroup));
+
+        const creditRule = new events.Rule(this, 'BigFanCreditRule', {
+            description: 'Send credit card events',
+            eventBus,
+            eventPattern: {
+                detail: {
+                    paymentType: ['credit'],
+                },
+                detailType: ['transaction'],
+            },
+        });
+        creditRule.addTarget(new eventsTargets.SqsQueue(creditQueue));
+
+        const debitRule = new events.Rule(this, 'BigFanDebitRule', {
+            description: 'Send debit card events',
+            eventBus,
+            eventPattern: {
+                detail: {
+                    paymentType: ['debit'],
+                },
+                detailType: ['transaction'],
+            },
+        });
+        debitRule.addTarget(new eventsTargets.SqsQueue(debitQueue));
     }
 }
+    
